@@ -6,7 +6,10 @@ from PIL import Image
 
 from PyQt5 import uic
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLabel
+from PyQt5.QtSql import QSqlTableModel, QSqlDatabase
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLabel, QDialog, QTableView, \
+    QLineEdit, QPushButton, QMessageBox
+
 from sell import Sell
 from add_on_warehouse import DialogWarehouseDisign
 from add_product import ProductDialog
@@ -25,8 +28,6 @@ cur = con.cursor()
 # Задаем класс всей системы магазина
 class System:
     def __init__(self):
-        self.costs = 0  # Расходы
-        self.income = 0  # Доходы
         self.warehouse = Warehouse()  # Создаем склад
         self.equipments = []  # Оборудование магазина
         eq = cur.execute('''select * from Equipment''').fetchall()
@@ -54,8 +55,8 @@ class System:
 
         self.access = None  # Уровень доступа текущего пользователя
         self.name = None  # Имя текущего пользователя
-        self.sec_name = None  # И фамилия
-        self.id = None
+        self.sec_name = None  # фамилия
+        self.id = None  # и ID пользователя
 
     def sign_in(self, login, password):
         for worker in self.workers:
@@ -74,24 +75,6 @@ class System:
         self.name = None
         self.sec_name = None
         self.id = None
-
-    """def add_position(self, name, access, salary):
-        self.positions.append(Position(name, access, salary))"""
-
-    def add_worker(self, worker):
-        for eqi in self.equipments:
-            if eqi.id == worker.equipment:
-                if not eqi.state:
-                    print(f'Сотрудник {worker.name} {worker.sec_name} принят на должность '
-                          f'{worker.position.name}')
-                    self.workers.append(worker)
-                    self.costs += worker.position.salary
-                    break
-                else:
-                    ans = input('Для данного сотрудника нет оборудования, принять его?')
-                    if ans == 'Да':
-                        self.workers.append(worker)
-                        self.costs += worker.position.salary
 
 
 # класс сотрудника
@@ -132,6 +115,15 @@ class Product:
         return self.name
 
 
+# класс оборудования
+class Equipment:
+    def __init__(self, id_equipment, thing, price):
+        self.id = id_equipment
+        self.thing = thing  # Название оборудования
+        self.price = price  # сколько оно стоило
+        self.state = False  # Используется ли данное оборудование кем-то
+
+
 # класс склада
 class Warehouse:
     def __init__(self):
@@ -154,33 +146,30 @@ class Warehouse:
         return True
 
     def check_num(self, product, quantity):
-        if self.products[product] - quantity < 0:  #
+        if self.products[product] - quantity < 0:  # Проверка, что нужное количество товара есть
             return False
         return True
 
     def del_product(self, product, quantity):
-        if self.products[product] - quantity < 0:
+        if self.products[product] - quantity < 0:  # удаляет количество товара полностью
             self.products[product] = 0
         else:
-            self.products[product] -= int(quantity)
-
-
-# класс оборудования
-class Equipment:
-    def __init__(self, id_equipment, thing, price):
-        self.id = id_equipment
-        self.thing = thing  # Название оборудования
-        self.price = price  # сколько оно стоило
-        self.state = False  # Используется ли данное оборудование кем-то
+            self.products[product] -= int(quantity)  # или часть
 
 
 class NewWorker(NewWorkerDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.picture = None
-        self.pic = None
-        self.image = QLabel(self)
         self.id = '-'
+
+        self.fname = QFileDialog.getOpenFileName(
+            self, 'Выбрать картинку', '',
+            'Картинка (*.jpg);;')[0]
+        self.pic = QPixmap(self.fname)
+        self.image = QLabel(self)
+        self.image.resize(300, 300)
+        self.image.move(40, 50)
+        self.image.setPixmap(self.pic)
 
     def quit(self):
         self.close()
@@ -211,19 +200,19 @@ class NewWorker(NewWorkerDialog):
                                     WHERE id = {e.id}""")
                     system.workers.append(Worker(self.id, name, sec, pos_id, login, pas, e.id))
                     self.massege.setText(f"Сотрудник {name} {sec} принят и готов к работе")
+                    im = Image.open(self.fname)
+                    im.save(f'Photos/{self.id}.jpg')
                     break
         else:
             self.massege.setText("Нет нужного оборудования для сотрудника")
 
     def load_photo(self):
-        fname = QFileDialog.getOpenFileName(
+        self.fname = QFileDialog.getOpenFileName(
             self, 'Выбрать картинку', '',
             'Картинка (*.jpg);;')[0]
-        self.pic = QPixmap(fname)
-        self.image = QLabel(self)
-        self.image.resize(300, 300)
+        self.pic = QPixmap(self.fname)
         self.image.setPixmap(self.pic)
-        im = Image.open(fname)
+        im = Image.open(self.fname)
         im.save(f'Photos/{self.id}.jpg')
 
 
@@ -234,7 +223,7 @@ class SellProductDialog(Sell):
         for el in system.warehouse.products.keys():
             if el.name == self.lineEdit.text():
                 prod = el
-        if system.warehouse.check_product(prod):
+        if system.warehouse.check_product(prod) or self.radioButton.isChecked():
             if system.warehouse.check_num(prod, q):
                 system.warehouse.del_product(prod, int(self.spinBox.value()))
                 self.massage.setText(f'Товар {prod.name} продан в количестве '
@@ -244,18 +233,8 @@ class SellProductDialog(Sell):
                                 SET Count = {system.warehouse.products[prod]}
                                 WHERE product = {prod.id}''')
 
-                system.costs += prod.selling_price * q
             else:
-                if self.radioButton.isChecked():
-                    system.warehouse.del_product(prod, q)
-                    self.massage.setText(f'Товар {prod.name} продан в количестве '
-                                         f'{int(self.spinBox.value())} штук по цене '
-                                         f'{prod.selling_price * q} рублей')
-                    cur.execute(f'''UPDATE Warehouse
-                                    SET Count = {system.warehouse.products[prod]}
-                                    WHERE product = {prod.id}''')
-                else:
-                    self.massage.setText('Столько товара нет')
+                self.massage.setText('Столько товара нет')
         else:
             self.massage.setText("Такого товара у нас нет")
 
@@ -325,6 +304,7 @@ class Window(QMainWindow):
     def __init__(self):
         super(Window, self).__init__()
         uic.loadUi('store.ui', self)
+        self.setWindowTitle('Система для магазина')
         self.system_store.hide()
         self.log_in.clicked.connect(self.sign_in)
         self.log_out_button.clicked.connect(self.log_out)
@@ -347,21 +327,30 @@ class Window(QMainWindow):
         self.check_warehouse.clicked.connect(self.check_warehouse_report)
         self.worker.clicked.connect(self.add_new_worker)
         self.buy_equi.clicked.connect(self.buy_new_equi)
+        self.list_workers.clicked.connect(self.return_worker_list)
+        self.delete_worker.clicked.connect(self.delete_pers)
+        # Зададим тип базы данных
+        self.db = QSqlDatabase.addDatabase('QSQLITE')
+        # Укажем имя базы данных
+        self.db.setDatabaseName('store_system.sqlite')
+        # И откроем подключение
+        self.db.open()
 
     def sign_in(self):
-        login = self.login.text()
-        pas = self.password.text()
-        if system.sign_in(login, pas):
-            self.new_report('Вошел в систему')
-            self.sing_in.hide()
-            self.system_store.show()
-            self.access3.hide()
-            self.access2.hide()
-            if system.access >= 3:
-                self.access3.show()
-            if system.access >= 2:
-                self.access2.show()
-        else:
+        try:
+            login = self.login.text()
+            pas = self.password.text()
+            if system.sign_in(login, pas):
+                self.new_report('Вошел в систему')
+                self.sing_in.hide()
+                self.system_store.show()
+                self.access3.hide()
+                self.access2.hide()
+                if system.access >= 3:
+                    self.access3.show()
+                if system.access >= 2:
+                    self.access2.show()
+        except Equipment:
             self.label_3.setText('Неверные входные данные')
 
     def log_out(self):
@@ -440,6 +429,71 @@ class Window(QMainWindow):
         a = AddEquipment(self)
         a.exec_()
         self.new_report('рассмотрел покупку нового оборудования')
+
+    def return_worker_list(self):
+        a = QDialog(self)
+
+        # QTableView - виджет для отображения данных из базы
+        view = QTableView(a)
+        # Создадим объект QSqlTableModel,
+        # зададим таблицу, с которой он будет работать,
+        #  и выберем все данные
+        model = QSqlTableModel(a, self.db)
+        model.setTable('Worker')
+        model.select()
+
+        # Для отображения данных на виджете
+        # свяжем его и нашу модель данных
+        view.setModel(model)
+        view.move(10, 10)
+        view.resize(617, 315)
+        a.exec_()
+
+    def delete(self):
+        try:
+            id_pers = int(self.input.text())
+
+            name = cur.execute(f"""Select Name From Worker
+                                    Where id = {id_pers}""").fetchall()
+            valid = QMessageBox.question(
+                self, '', f"Действительно уволить {name}",
+                QMessageBox.Yes, QMessageBox.No)
+            # Если пользователь ответил утвердительно, удаляем элементы.
+            # Не забываем зафиксировать изменения
+            if valid == QMessageBox.Yes:
+                cur.execute(f'''DELETE from Worker
+                                where id = {id_pers}''')
+            con.commit()
+        except Equipment:
+            pass
+
+    def delete_pers(self):
+        a = QDialog()
+        a.label = QLabel(a)
+        a.label.setText('Введите ID работника, которого хотите уволить:')
+        a.label.move(5, 5)
+        self.input = QLineEdit(a)
+        self.input.move(5, 30)
+        a.btn = QPushButton(a)
+        a.btn.move(150, 30)
+        a.btn.setText('Уволить')
+        a.btn.clicked.connect(self.delete)
+        # QTableView - виджет для отображения данных из базы
+        view = QTableView(a)
+        # Создадим объект QSqlTableModel,
+        # зададим таблицу, с которой он будет работать,
+        #  и выберем все данные
+        model = QSqlTableModel(a, self.db)
+        model.setTable('Worker')
+        model.select()
+
+        # Для отображения данных на виджете
+        # свяжем его и нашу модель данных
+        view.setModel(model)
+        view.move(5, 70)
+        view.resize(617, 315)
+
+        a.exec_()
 
     def closeEvent(self, event):
         con.commit()

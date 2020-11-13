@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>856</width>
-    <height>696</height>
+    <width>858</width>
+    <height>679</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,14 +166,14 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_10">
+              <widget class="QPushButton" name="delete_worker">
                <property name="text">
                 <string>Уволить сотрудника</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_2">
+              <widget class="QPushButton" name="list_workers">
                <property name="text">
                 <string>Список работников</string>
                </property>
@@ -278,7 +278,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>856</width>
+     <width>858</width>
      <height>20</height>
     </rect>
    </property>
