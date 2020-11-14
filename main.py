@@ -9,6 +9,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtSql import QSqlTableModel, QSqlDatabase
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLabel, QDialog, QTableView, \
     QLineEdit, QPushButton, QMessageBox
+from PyQt5.QtCore import Qt
 
 from sell import Sell
 from add_on_warehouse import DialogWarehouseDisign
@@ -305,7 +306,9 @@ class Window(QMainWindow):
         super(Window, self).__init__()
         uic.loadUi('store.ui', self)
         self.setWindowTitle('Система для магазина')
+        self.input = None
         self.system_store.hide()
+        self.log_in.setShortcut(Qt.Key_Return)
         self.log_in.clicked.connect(self.sign_in)
         self.log_out_button.clicked.connect(self.log_out)
         self.clean.clicked.connect(self.add_clean)
