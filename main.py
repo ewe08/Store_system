@@ -11,11 +11,11 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLabel, QDia
     QLineEdit, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 
-from sell import Sell
-from add_on_warehouse import DialogWarehouseDisign
-from add_product import ProductDialog
-from worker import NewWorkerDialog
-from Equi import EquiDialog
+from Dialogs.sell import Sell
+from Dialogs.add_on_warehouse import DialogWarehouseDisign
+from Dialogs.add_product import ProductDialog
+from Dialogs.worker import NewWorkerDialog
+from Dialogs.Equi import EquiDialog
 
 name_db = 'store_system.sqlite'
 
@@ -142,7 +142,7 @@ class Warehouse:
             self.products[product] = int(quantity)
 
     def check_product(self, product):  # Проверка на наличие товара
-        if product not in self.products:  #
+        if product not in self.products:  # возвращает истину если товар есть в базе данных
             return False
         return True
 
@@ -161,29 +161,29 @@ class Warehouse:
 class NewWorker(NewWorkerDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.id = '-'
+        self.id = '-'  # ID поумолчанию
 
         self.fname = QFileDialog.getOpenFileName(
             self, 'Выбрать картинку', '',
-            'Картинка (*.jpg);;')[0]
+            'Картинка (*.jpg);;')[0]  # открытие фотографии нового работника
         self.pic = QPixmap(self.fname)
         self.image = QLabel(self)
         self.image.resize(300, 300)
         self.image.move(40, 50)
-        self.image.setPixmap(self.pic)
+        self.image.setPixmap(self.pic)  # загрузка фотографии
 
     def quit(self):
-        self.close()
+        self.close()  # Закрытие окна
 
     def add_new_worker(self):
-        name = self.lineEdit.text()
-        sec = self.lineEdit_2.text()
-        pos = self.lineEdit_3.text()
-        login = self.lineEdit_4.text()
-        pas = self.lineEdit_5.text()
-        eqi = self.lineEdit_6.text()
+        name = self.lineEdit.text()  # Считываем имя
+        sec = self.lineEdit_2.text()  # Фамилию
+        pos = self.lineEdit_3.text()  # Должность
+        login = self.lineEdit_4.text()  # Логин для входа
+        pas = self.lineEdit_5.text()  # Пароль
+        eqi = self.lineEdit_6.text()  # И оборудования
         pos_id = None
-        for p in system.positions:
+        for p in system.positions:  # Нахождение ID должности
             if p.name == pos:
                 pos_id = p.id
                 break
@@ -193,7 +193,7 @@ class NewWorker(NewWorkerDialog):
             if e.thing == eqi:
                 if not e.state:
                     self.id = cur.execute('SELECT max(id) FROM Worker').fetchall()
-                    self.id = self.id[0][0] + 1
+                    self.id = self.id[0][0] + 1  # изменение ID текущего пользователя
                     cur.execute(f'''INSERT INTO Worker VALUES ({self.id}, "{name}",
                                     '{sec}', '{pos_id}', 0, '{login}', '{pas}', {e.id});''')
                     cur.execute(f"""UPDATE Equipment
