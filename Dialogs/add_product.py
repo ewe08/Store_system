@@ -67,7 +67,7 @@ class ProductDialog(QDialog):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Добавление нового товара"))
         self.label_4.setText(_translate("Dialog", "Такого товара у нас еще не было."))
         self.label.setText(_translate("Dialog", "Название товара:"))
         self.label_3.setText(_translate("Dialog", "Цена закупки этого товара"))

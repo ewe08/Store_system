@@ -66,7 +66,7 @@ class Sell(QDialog):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Продажа товара"))
         self.pushButton.setText(_translate("Dialog", "Продать"))
         self.pushButton_2.setText(_translate("Dialog", "Отмена"))
         self.label.setText(_translate("Dialog", "Введите название товара и его количество:"))

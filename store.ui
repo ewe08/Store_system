@@ -39,20 +39,48 @@
       <string>Выйти</string>
      </property>
     </widget>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QCheckBox" name="manual_check">
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>60</y>
-       <width>811</width>
-       <height>561</height>
+       <y>30</y>
+       <width>201</width>
+       <height>18</height>
       </rect>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_10">
+     <property name="text">
+      <string>Ручная настройка даты и времени</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>62</y>
+       <width>801</width>
+       <height>551</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_11">
       <item>
-       <layout class="QHBoxLayout" name="reports">
+       <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QCalendarWidget" name="calendarWidget"/>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <widget class="QTimeEdit" name="timeEdit">
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCalendarWidget" name="calendarWidget">
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QListWidget" name="reports_2"/>
@@ -176,6 +204,13 @@
               <widget class="QPushButton" name="list_workers">
                <property name="text">
                 <string>Список работников</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="new_position">
+               <property name="text">
+                <string>Добавить новую должность</string>
                </property>
               </widget>
              </item>

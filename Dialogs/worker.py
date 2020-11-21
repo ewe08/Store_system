@@ -100,7 +100,7 @@ class NewWorkerDialog(QDialog):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Рассмотр анкеты нового сотрудника"))
         self.add.setText(_translate("Dialog", "Нанять"))
         self.exit.setText(_translate("Dialog", "Отмена"))
         self.photo.setText(_translate("Dialog", "Загрузить фотографию"))

@@ -63,7 +63,7 @@ class DialogWarehouseDisign(QDialog):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Добавить товар"))
         self.pushButton.setText(_translate("Dialog", "Добавить"))
         self.pushButton_2.setText(_translate("Dialog", "Закрыть"))
         self.label.setText(_translate("Dialog", "Введите какой товар и его количество"))

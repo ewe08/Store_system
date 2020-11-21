@@ -16,6 +16,7 @@ from Dialogs.add_on_warehouse import DialogWarehouseDisign
 from Dialogs.add_product import ProductDialog
 from Dialogs.worker import NewWorkerDialog
 from Dialogs.Equi import EquiDialog
+from Dialogs.add_position import NewPosition
 
 name_db = 'store_system.sqlite'
 
@@ -301,6 +302,25 @@ class AddEquipment(EquiDialog):
         cur.execute(f"""INSERT INTO Equipment VALUES({id_e}, '{thing}', {price}, "False")""")
 
 
+class AddNewPosition(NewPosition):
+    def quit(self):
+        self.close()
+
+    def add_new_position(self):
+        name = self.lineEdit.text()
+        salary = self.lineEdit_2.text()
+        if name != '' and salary != '':
+            id_p = cur.execute('SELECT max(id) FROM Equipment').fetchall()
+            id_p = id_p[0][0] + 1
+            access = self.spinBox.value()
+            pos = Position(id_p, name, access, salary)
+            system.positions.append(pos)
+            cur.execute(f'''INSERT INTO Position VALUES({id_p}, '{name}', {access}, {salary})''')
+            self.message.setText('Должность успешно добавлена')
+        else:
+            self.message.setText('Произошла ошибка в вводе')
+
+
 class Window(QMainWindow):
     def __init__(self):
         super(Window, self).__init__()
@@ -325,12 +345,14 @@ class Window(QMainWindow):
                     pers = per
             self.reports_2.insertItem(0, f'{el[2]} {el[3]} {pers.name} {pers.sec_name} {el[4]}')
         self.rep_id = rep[-1][0] + 1
+        self.reports_2.sortItems()
         self.new_prod.clicked.connect(self.new_product)
         self.inventory.clicked.connect(self.check_inventory)
         self.check_warehouse.clicked.connect(self.check_warehouse_report)
         self.worker.clicked.connect(self.add_new_worker)
         self.buy_equi.clicked.connect(self.buy_new_equi)
         self.list_workers.clicked.connect(self.return_worker_list)
+        self.new_position.clicked.connect(self.new_pos)
         self.delete_worker.clicked.connect(self.delete_pers)
         # Зададим тип базы данных
         self.db = QSqlDatabase.addDatabase('QSQLITE')
@@ -338,23 +360,36 @@ class Window(QMainWindow):
         self.db.setDatabaseName('store_system.sqlite')
         # И откроем подключение
         self.db.open()
+        self.manual_check.stateChanged.connect(self.set_manual)
+        self.manual = True
+        self.calendarWidget.hide()
+        self.timeEdit.hide()
+
+    def set_manual(self):
+        if self.manual:
+            self.calendarWidget.show()
+            self.timeEdit.show()
+            self.manual = False
+        else:
+            self.manual = True
+            self.calendarWidget.hide()
+            self.timeEdit.hide()
 
     def sign_in(self):
-        try:
-            login = self.login.text()
-            pas = self.password.text()
-            if system.sign_in(login, pas):
-                self.new_report('Вошел в систему')
-                self.sing_in.hide()
-                self.system_store.show()
-                self.access3.hide()
-                self.access2.hide()
-                if system.access >= 3:
-                    self.access3.show()
-                if system.access >= 2:
-                    self.access2.show()
-        except Equipment:
-            self.label_3.setText('Неверные входные данные')
+        login = self.login.text()
+        pas = self.password.text()
+        if system.sign_in(login, pas):
+            self.new_report('Вошел в систему')
+            self.sing_in.hide()
+            self.system_store.show()
+            self.access3.hide()
+            self.access2.hide()
+            if system.access >= 3:
+                self.access3.show()
+            if system.access >= 2:
+                self.access2.show()
+        else:
+            self.label_4.setText('Неверные входные данные')
 
     def log_out(self):
         self.new_report('Вышел из системы')
@@ -390,8 +425,12 @@ class Window(QMainWindow):
         self.new_report('Закупил новые продукты. Теперь их можно закупать')
 
     def new_report(self, text):
-        date = self.calendarWidget.selectedDate().toString("yyyy-MM-dd")
-        time = dt.datetime.now().time().strftime("%H:%M")
+        if self.manual:
+            date = dt.datetime.now().date()
+            time = dt.datetime.now().time().strftime("%H:%M")
+        else:
+            date = self.calendarWidget.selectedDate().toString("yyyy-MM-dd")
+            time = self.timeEdit.time().toString("hh:mm")
         self.reports_2.addItem(
             f'{date} {time} {system.name} {system.sec_name} {text}'
         )
@@ -497,6 +536,11 @@ class Window(QMainWindow):
         view.resize(617, 315)
 
         a.exec_()
+
+    def new_pos(self):
+        a = AddNewPosition(self)
+        a.exec_()
+        self.new_report('Рассматривал новые должности')
 
     def closeEvent(self, event):
         con.commit()

@@ -16,7 +16,7 @@ class EquiDialog(QDialog):
     def __init__(self, parent=None):
         super(EquiDialog, self).__init__(parent)
 
-        self.setObjectName("Dialog")
+        self.setObjectName("Добавление нового оборудования")
         self.resize(400, 300)
         self.label = QtWidgets.QLabel(self)
         self.label.setGeometry(QtCore.QRect(130, 30, 111, 16))
@@ -59,7 +59,7 @@ class EquiDialog(QDialog):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Добавление нового оборудования"))
         self.label.setText(_translate("Dialog", "Новое оборудование"))
         self.buy.setText(_translate("Dialog", "Закупить"))
         self.exit.setText(_translate("Dialog", "Отмена"))
