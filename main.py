@@ -163,13 +163,9 @@ class NewWorker(NewWorkerDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.id = '-'  # ID поумолчанию
-
-        self.fname = QFileDialog.getOpenFileName(
-            self, 'Выбрать картинку', '',
-            'Картинка (*.jpg);;')[0]  # открытие фотографии нового работника
-        self.pic = QPixmap(self.fname)
+        self.pic = QPixmap('Photos/netfoto.jpg')
         self.image = QLabel(self)
-        self.image.resize(300, 300)
+
         self.image.move(40, 50)
         self.image.setPixmap(self.pic)  # загрузка фотографии
 
