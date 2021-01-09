@@ -7,14 +7,10 @@ from PIL import Image
 from PyQt5 import uic
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtSql import QSqlTableModel, QSqlDatabase
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLabel, QDialog, QTableView, \
-    QLineEdit, QPushButton, QMessageBox
+from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
-from Dialogs.sell import Sell
-from Dialogs.add_on_warehouse import DialogWarehouseDisign
 from Dialogs.add_product import ProductDialog
-from Dialogs.worker import NewWorkerDialog
 from Dialogs.Equi import EquiDialog
 from Dialogs.add_position import NewPosition
 
@@ -43,17 +39,12 @@ class System:
         self.workers = []  # Персонал магазина
         wor = cur.execute("""select * from Worker""").fetchall()
         p = None
-        e = None
         for el in wor:
             for pos in self.positions:
                 if pos.id == el[3]:
                     p = pos
                     break
-            for eqi in self.equipments:
-                if eqi.id == el[-1]:
-                    e = eqi.id
-                    break
-            self.workers.append(Worker(el[0], el[1], el[2], p.id, el[5], el[6], e))
+            self.workers.append(Worker(el[0], el[1], el[2], p.id, el[5], el[6]))
 
         self.access = None  # Уровень доступа текущего пользователя
         self.name = None  # Имя текущего пользователя
@@ -81,7 +72,7 @@ class System:
 
 # класс сотрудника
 class Worker:
-    def __init__(self, id_worker, name, sec_name, posit, login, password, equipment_id):
+    def __init__(self, id_worker, name, sec_name, posit, login, password):
         self.id = id_worker
         self.name = name  # Имя
         self.sec_name = sec_name  # Фамилия
@@ -90,7 +81,6 @@ class Worker:
         self.fines = []  # Штрафы(обнуляются каждый месяц)
         self.login = login
         self.password = str(password)
-        self.equipment = equipment_id  # Необходимое оборудование для этого работника
 
 
 # Класс профессии
@@ -102,6 +92,9 @@ class Position:
         self.salary = salary  # Зарплата при данной прифессии
         # При первом уровне работник может продавать товар,
         # заполнять график уборок, проверять количество товара на складе и прочее
+
+    def __str__(self):
+        return self.name
 
 
 # Класс товара
@@ -124,6 +117,9 @@ class Equipment:
         self.thing = thing  # Название оборудования
         self.price = price  # сколько оно стоило
         self.state = False  # Используется ли данное оборудование кем-то
+
+    def __str__(self):
+        return self.thing
 
 
 # класс склада
@@ -159,92 +155,113 @@ class Warehouse:
             self.products[product] -= int(quantity)  # или часть
 
 
-class NewWorker(NewWorkerDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+class NewWorker(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('Forms/worker.ui', self)
         self.id = '-'  # ID поумолчанию
         self.pic = QPixmap('Photos/netfoto.jpg')
         self.image = QLabel(self)
-
         self.image.move(40, 50)
         self.image.setPixmap(self.pic)  # загрузка фотографии
+        self.load_comboBoxes()
+        self.add.clicked.connect(self.add_new_worker)
+        self.exit.clicked.connect(self.quit)
+        self.photo.clicked.connect(self.load_photo)
 
     def quit(self):
         self.close()  # Закрытие окна
 
     def add_new_worker(self):
-        name = self.lineEdit.text()  # Считываем имя
-        sec = self.lineEdit_2.text()  # Фамилию
-        pos = self.lineEdit_3.text()  # Должность
-        login = self.lineEdit_4.text()  # Логин для входа
-        pas = self.lineEdit_5.text()  # Пароль
-        eqi = self.lineEdit_6.text()  # И оборудования
+        name = self.lineEdit.text()
+        sec = self.lineEdit_2.text()
+        pos = self.comboBox.currentText()
+        login = self.lineEdit_4.text()
+        pas = self.lineEdit_5.text()
         pos_id = None
         for p in system.positions:  # Нахождение ID должности
             if p.name == pos:
                 pos_id = p.id
                 break
-        else:
-            self.massege.setText('Такой должности у нас нет')
-        for e in system.equipments:
-            if e.thing == eqi:
-                if not e.state:
-                    self.id = cur.execute('SELECT max(id) FROM Worker').fetchall()
-                    self.id = self.id[0][0] + 1  # изменение ID текущего пользователя
-                    cur.execute(f'''INSERT INTO Worker VALUES ({self.id}, "{name}",
-                                    '{sec}', '{pos_id}', 0, '{login}', '{pas}', {e.id});''')
-                    cur.execute(f"""UPDATE Equipment
-                                    SET state = True
-                                    WHERE id = {e.id}""")
-                    system.workers.append(Worker(self.id, name, sec, pos_id, login, pas, e.id))
-                    self.massege.setText(f"Сотрудник {name} {sec} принят и готов к работе")
-                    im = Image.open(self.fname)
-                    im.save(f'Photos/{self.id}.jpg')
-                    break
-        else:
-            self.massege.setText("Нет нужного оборудования для сотрудника")
+
+        self.id = cur.execute('SELECT max(id) FROM Worker').fetchall()
+        self.id = self.id[0][0] + 1  # изменение ID текущего пользователя
+        cur.execute(f'''INSERT INTO Worker VALUES ({self.id}, "{name}",
+                        '{sec}', '{pos_id}', 0, '{login}', '{pas}')''')
+
+        system.workers.append(Worker(self.id, name, sec, pos_id, login, pas))
+        self.massege.setText(f"Сотрудник {name} {sec} принят и готов к работе")
+        im = Image.open(self.fname)
+        im.save(f'Photos/{self.id}.jpg')
 
     def load_photo(self):
         self.fname = QFileDialog.getOpenFileName(
             self, 'Выбрать картинку', '',
             'Картинка (*.jpg);;')[0]
-        self.pic = QPixmap(self.fname)
+        self.pic = QPixmap(self.fname).scaled(200, 200)
         self.image.setPixmap(self.pic)
         im = Image.open(self.fname)
         im.save(f'Photos/{self.id}.jpg')
 
+    def load_comboBoxes(self):
+        for pos in system.positions:
+            self.comboBox.addItem(str(pos))
 
-class SellProductDialog(Sell):
+
+class SellProductDialog(QDialog):
+    def __init__(self):
+        super(SellProductDialog, self).__init__()
+        uic.loadUi('Forms/sell.ui', self)
+        self.setWindowTitle('Продажа товара')
+        self.pushButton.clicked.connect(self.sell)
+        self.pushButton_2.clicked.connect(self.close)
+        self.load_combo()
+
     def sell(self):
         q = int(self.spinBox.value())
-        prod = None
-        for el in system.warehouse.products.keys():
-            if el.name == self.lineEdit.text():
-                prod = el
-        if system.warehouse.check_product(prod) or self.radioButton.isChecked():
-            if system.warehouse.check_num(prod, q):
-                system.warehouse.del_product(prod, int(self.spinBox.value()))
-                self.massage.setText(f'Товар {prod.name} продан в количестве '
-                                     f'{int(self.spinBox.value())} штук по цене '
-                                     f'{prod.selling_price * q} рублей')
-                cur.execute(f'''UPDATE Warehouse
-                                SET Count = {system.warehouse.products[prod]}
-                                WHERE product = {prod.id}''')
-
-            else:
-                self.massage.setText('Столько товара нет')
+        if q == 0:
+            self.massage.setText("Вы не указали количество товара")
         else:
-            self.massage.setText("Такого товара у нас нет")
+            prod = None
+            for el in system.warehouse.products.keys():
+                if el.name == self.comboBox.currentText():
+                    prod = el
+            if system.warehouse.check_product(prod) or self.radioButton.isChecked():
+                if system.warehouse.check_num(prod, q):
+                    system.warehouse.del_product(prod, int(self.spinBox.value()))
+                    self.massage.setText(f'Товар {prod.name} продан в количестве '
+                                         f'{int(self.spinBox.value())} штук по цене '
+                                         f'{prod.selling_price * q} рублей')
+                    cur.execute(f'''UPDATE Warehouse
+                                    SET Count = {system.warehouse.products[prod]}
+                                    WHERE product = {prod.id}''')
+
+                else:
+                    self.massage.setText('Столько товара нет')
+            else:
+                self.massage.setText("Такого товара у нас нет")
+
+    def load_combo(self):
+        for el in system.warehouse.products.keys():
+            self.comboBox.addItem(str(el))
 
     def quit(self):
         self.close()
 
 
-class DialogWarehouse(DialogWarehouseDisign):
+class DialogWarehouse(QDialog):
+    def __init__(self):
+        super(DialogWarehouse, self).__init__()
+        uic.loadUi('Forms/add_on_warehouse.ui', self)
+        self.setWindowTitle('Разгрузка товара на склад')
+        self.pushButton.clicked.connect(self.add)
+        self.pushButton_2.clicked.connect(self.quit)
+        self.load_combo()
+
     def add(self):
         q = int(self.spinBox.value())
         for el in system.warehouse.products.keys():
-            if el.name == self.lineEdit.text():
+            if el.name == self.comboBox.currentText():
                 prod = el
                 system.warehouse.products[prod] += q
                 self.label_2.setText(f'{prod.name} добавлены на склад в объеме {q} штук')
@@ -252,9 +269,10 @@ class DialogWarehouse(DialogWarehouseDisign):
                                 SET Count = {system.warehouse.products[prod]}
                                 WHERE product = {prod.id}""")
                 break
-        else:
-            self.label_2.setText('Такого товара раньше не было, обратитесь к товароведу '
-                                 'или другому работнику с 2 уровнем доступа')
+
+    def load_combo(self):
+        for el in system.warehouse.products.keys():
+            self.comboBox.addItem(str(el))
 
     def quit(self):
         self.close()
@@ -320,7 +338,7 @@ class AddNewPosition(NewPosition):
 class Window(QMainWindow):
     def __init__(self):
         super(Window, self).__init__()
-        uic.loadUi('store.ui', self)
+        uic.loadUi('Forms/store.ui', self)
         self.setWindowTitle('Система для магазина')
         self.input = None
         self.system_store.hide()
@@ -331,6 +349,8 @@ class Window(QMainWindow):
         self.plumber.clicked.connect(self.check_plumber)
         self.electricity.clicked.connect(self.electricity_check)
         self.sell.clicked.connect(self.sell_prod)
+        self.new_worker = NewWorker()
+
         self.add_on_warehouse.clicked.connect(self.add_on_warehouse_dialog)
         rep = cur.execute(f"""SELECT * FROM Reports""").fetchall()
         self.rep_id = 0
@@ -406,13 +426,13 @@ class Window(QMainWindow):
         self.new_report('провел работы с электричеством')
 
     def sell_prod(self):
-        a = SellProductDialog(self)
-        a.exec_()
+        self.sell = SellProductDialog()
+        self.sell.show()
         self.new_report('работал у кассы')
 
     def add_on_warehouse_dialog(self):
-        a = DialogWarehouse(self)
-        a.exec_()
+        self.add_warehouse = DialogWarehouse()
+        self.add_warehouse.show()
         self.new_report('разгружал товары на складе')
 
     def new_product(self):
@@ -459,8 +479,7 @@ class Window(QMainWindow):
         self.new_report('провел переучет склада')
 
     def add_new_worker(self):
-        a = NewWorker(self)
-        a.exec_()
+        self.new_worker.show()
         self.new_report('Рассмотрел новый персонал на работу')
 
     def buy_new_equi(self):

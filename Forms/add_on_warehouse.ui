@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>90</x>
@@ -39,7 +39,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -61,7 +61,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QComboBox" name="comboBox"/>
         </item>
         <item>
          <widget class="QSpinBox" name="spinBox"/>
@@ -73,8 +73,7 @@
     <item>
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>Такого товара раньше не было, обратитесь к товароведу 
-или другому работнику с 2 уровнем доступа</string>
+       <string/>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>
